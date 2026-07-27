@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Upload Resumes{% endblock %}
+{% block page_title %}Upload Resumes{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <div class="glass-card p-5">
+        <h4 class="fw-bold mb-1">Upload Candidate Resumes</h4>
+        <p class="text-muted mb-4">
+          Supports <strong>PDF</strong> and <strong>DOCX</strong> formats.
+          Upload multiple files at once — the AI will extract all candidate information automatically.
+        </p>
+
+        <form id="uploadForm" method="POST" enctype="multipart/form-data">
+          <!-- Drop Zone -->
+          <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-inner">
+              <div class="drop-icon">
+                <i class="bi bi-cloud-arrow-up-fill"></i>
+              </div>
+              <h5 class="drop-title">Drag & Drop Resumes Here</h5>
+              <p class="drop-sub">or click to browse files</p>
+              <input type="file" id="resumeInput" name="resumes"
+                     accept=".pdf,.docx" multiple hidden />
+              <button type="button" class="btn btn-primary-custom mt-3" id="browseBtn">
+                <i class="bi bi-folder2-open me-2"></i>Browse Files
+              </button>
+            </div>
+          </div>
+
+          <!-- File List Preview -->
+          <div id="fileList" class="file-list mt-4 d-none"></div>
+
+          <!-- Upload Button -->
+          <button type="submit" class="btn btn-success-custom w-100 mt-4" id="uploadBtn" disabled>
+            <i class="bi bi-cpu-fill me-2"></i>
+            <span id="uploadBtnText">Process & Extract Information</span>
+          </button>
+        </form>
+
+        <!-- Info Strip -->
+        <div class="info-strip mt-4">
+          <div class="info-item">
+            <i class="bi bi-person-badge-fill text-info"></i>
+            <span>Name & Contact extraction</span>
+          </div>
+          <div class="info-item">
+            <i class="bi bi-code-slash text-success"></i>
+            <span>Skills detection (150+ keywords)</span>
+          </div>
+          <div class="info-item">
+            <i class="bi bi-mortarboard-fill text-warning"></i>
+            <span>Education & Experience parsing</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const dropZone   = document.getElementById('dropZone');
+const fileInput  = document.getElementById('resumeInput');
+const browseBtn  = document.getElementById('browseBtn');
+const fileList   = document.getElementById('fileList');
+const uploadBtn  = document.getElementById('uploadBtn');
+const uploadForm = document.getElementById('uploadForm');
+
+browseBtn.addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', () => showFiles(fileInput.files));
+
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('dragging');
+});
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragging'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragging');
+  const files = e.dataTransfer.files;
+  fileInput.files = files;
+  showFiles(files);
+});
+
+function showFiles(files) {
+  if (!files.length) return;
+  fileList.classList.remove('d-none');
+  fileList.innerHTML = '';
+  Array.from(files).forEach(f => {
+    const icon = f.name.endsWith('.pdf') ? 'bi-file-pdf-fill' : 'bi-file-earmark-word-fill';
+    const color = f.name.endsWith('.pdf') ? '#ef4444' : '#3b82f6';
+    fileList.innerHTML += `
+      <div class="file-item">
+        <i class="bi ${icon}" style="color:${color}; font-size:1.4rem"></i>
+        <div class="file-info">
+          <div class="file-name">${f.name}</div>
+          <div class="file-size">${(f.size/1024).toFixed(1)} KB</div>
+        </div>
+        <i class="bi bi-check-circle-fill text-success"></i>
+      </div>`;
+  });
+  uploadBtn.disabled = false;
+}
+
+uploadForm.addEventListener('submit', () => {
+  uploadBtn.disabled = true;
+  document.getElementById('uploadBtnText').textContent = 'Processing… please wait';
+});
+</script>
+{% endblock %}

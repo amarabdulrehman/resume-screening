@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}{{ candidate.name or 'Candidate' }} — Profile{% endblock %}
+{% block page_title %}Candidate Profile{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+
+  <!-- Profile Header -->
+  <div class="profile-header glass-card p-5 mb-4">
+    <div class="d-flex align-items-center gap-4 flex-wrap">
+      <div class="profile-avatar">{{ (candidate.name or 'U')[0].upper() }}</div>
+      <div class="flex-grow-1">
+        <h3 class="fw-bold mb-1">{{ candidate.name or 'Unknown Candidate' }}</h3>
+        <div class="d-flex flex-wrap gap-3 text-muted">
+          {% if candidate.email %}
+          <span><i class="bi bi-envelope-fill me-1 text-info"></i>{{ candidate.email }}</span>
+          {% endif %}
+          {% if candidate.phone %}
+          <span><i class="bi bi-telephone-fill me-1 text-success"></i>{{ candidate.phone }}</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="profile-actions">
+        {% if results %}
+          {% set best = results[0] %}
+          <div class="best-score-badge">
+            <span class="score-label">Best Match</span>
+            <span class="score-value {% if best.match_score >= 70 %}text-success{% elif best.match_score >= 40 %}text-warning{% else %}text-danger{% endif %}">
+              {{ best.match_score }}%
+            </span>
+          </div>
+        {% endif %}
+        <a href="/static/uploads/{{ candidate.resume_filename }}"
+           target="_blank" class="btn btn-outline-info btn-sm">
+          <i class="bi bi-file-earmark-fill me-1"></i>View Resume
+        </a>
+        <form method="POST"
+              action="{{ url_for('resume.delete_candidate', candidate_id=candidate.id) }}"
+              onsubmit="return confirm('Delete this candidate?')">
+          <button type="submit" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-trash-fill"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- Left Column: Info -->
+    <div class="col-lg-7">
+
+      <!-- Skills -->
+      <div class="glass-card p-4 mb-4">
+        <h6 class="card-section-title mb-3">
+          <i class="bi bi-code-slash me-2 text-primary-custom"></i>
+          Detected Skills ({{ candidate.skills|length }})
+        </h6>
+        {% if candidate.skills %}
+          <div class="skill-tags">
+            {% for skill in candidate.skills %}
+              <span class="skill-tag">{{ skill }}</span>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted">No skills detected.</p>
+        {% endif %}
+      </div>
+
+      <!-- Education -->
+      <div class="glass-card p-4 mb-4">
+        <h6 class="card-section-title mb-3">
+          <i class="bi bi-mortarboard-fill me-2 text-warning"></i>Education
+        </h6>
+        <p class="text-muted small mb-0">{{ candidate.education or 'Not detected.' }}</p>
+      </div>
+
+      <!-- Experience -->
+      <div class="glass-card p-4">
+        <h6 class="card-section-title mb-3">
+          <i class="bi bi-briefcase-fill me-2 text-success"></i>Experience
+          {% if candidate.experience_years %}
+            <span class="badge bg-success ms-2">{{ candidate.experience_years }} years</span>
+          {% endif %}
+        </h6>
+        {% if candidate.experience_text %}
+          <pre class="experience-pre">{{ candidate.experience_text[:800] }}</pre>
+        {% else %}
+          <p class="text-muted">Not detected.</p>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <!-- Right Column: Screening Results -->
+    <div class="col-lg-5">
+      <div class="glass-card p-4 mb-4">
+        <h6 class="card-section-title mb-3">
+          <i class="bi bi-bar-chart-fill me-2 text-info"></i>
+          Screening Results
+        </h6>
+        {% if results %}
+          {% for res in results %}
+          <div class="result-item mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="text-sm fw-semibold">{{ res.job.title }}</span>
+              <span class="score-pill {% if res.match_score >= 70 %}high{% elif res.match_score >= 40 %}mid{% else %}low{% endif %} sm">
+                Rank #{{ res.rank }} — {{ res.match_score }}%
+              </span>
+            </div>
+            <!-- Score Breakdown -->
+            <div class="score-breakdown">
+              <div class="breakdown-row">
+                <span class="text-muted small">Text Match</span>
+                <div class="breakdown-bar-wrap">
+                  <div class="breakdown-bar blue" style="width:{{ (res.tfidf_score*100)|round(0) }}%"></div>
+                </div>
+                <span class="text-info small">{{ (res.tfidf_score*100)|round(1) }}%</span>
+              </div>
+              <div class="breakdown-row">
+                <span class="text-muted small">Skills</span>
+                <div class="breakdown-bar-wrap">
+                  <div class="breakdown-bar green" style="width:{{ (res.skill_overlap*100)|round(0) }}%"></div>
+                </div>
+                <span class="text-success small">{{ (res.skill_overlap*100)|round(1) }}%</span>
+              </div>
+              <div class="breakdown-row">
+                <span class="text-muted small">Experience</span>
+                <div class="breakdown-bar-wrap">
+                  <div class="breakdown-bar yellow" style="width:{{ (res.exp_bonus*100)|round(0) }}%"></div>
+                </div>
+                <span class="text-warning small">{{ (res.exp_bonus*100)|round(1) }}%</span>
+              </div>
+            </div>
+            <a href="{{ url_for('job.results', job_id=res.job_id) }}"
+               class="btn btn-sm btn-outline-secondary mt-2 w-100">
+              View Full Rankings
+            </a>
+          </div>
+          {% if not loop.last %}<hr class="border-secondary">{% endif %}
+          {% endfor %}
+        {% else %}
+          <div class="empty-state">
+            <i class="bi bi-clipboard-data-fill"></i>
+            <p>No screenings yet for this candidate.<br/>
+              <a href="{{ url_for('job.job_list') }}">Select a job to screen →</a>
+            </p>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Radar Chart -->
+      {% if results %}
+      {% set res = results[0] %}
+      <div class="glass-card p-4">
+        <h6 class="card-section-title mb-3">
+          <i class="bi bi-diagram-3-fill me-2 text-purple"></i>Score Radar
+        </h6>
+        <canvas id="radarChart" height="250"></canvas>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if results %}
+{% set res = results[0] %}
+<script>
+new Chart(document.getElementById('radarChart'), {
+  type: 'radar',
+  data: {
+    labels: ['Text Match', 'Skills Overlap', 'Experience', 'Overall Score'],
+    datasets: [{
+      label: 'Candidate Scores',
+      data: [
+        {{ (res.tfidf_score * 100)|round(1) }},
+        {{ (res.skill_overlap * 100)|round(1) }},
+        {{ (res.exp_bonus * 100)|round(1) }},
+        {{ res.match_score }}
+      ],
+      backgroundColor: 'rgba(59,130,246,0.15)',
+      borderColor:     '#3b82f6',
+      pointBackgroundColor: '#3b82f6',
+      pointBorderColor: '#fff',
+      borderWidth: 2,
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      r: {
+        min: 0, max: 100,
+        ticks: { color: '#6b7280', backdropColor: 'transparent', stepSize: 25 },
+        grid:  { color: 'rgba(255,255,255,0.08)' },
+        pointLabels: { color: '#9ca3af', font: { size: 11 } }
+      }
+    },
+    plugins: {
+      legend: { display: false }
+    }
+  }
+});
+</script>
+{% endif %}
+{% endblock %}

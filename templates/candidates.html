@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}All Candidates{% endblock %}
+{% block page_title %}All Candidates{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <p class="text-muted mb-0">{{ candidates|length }} candidate(s) in database</p>
+    <a href="{{ url_for('resume.upload') }}" class="btn btn-primary-custom btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>Upload More
+    </a>
+  </div>
+
+  {% if candidates %}
+  <div class="glass-card p-0 overflow-hidden">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle mb-0" id="candidatesTable">
+        <thead>
+          <tr>
+            <th class="ps-4">#</th>
+            <th>Candidate</th>
+            <th>Contact</th>
+            <th>Skills</th>
+            <th>Experience</th>
+            <th>File</th>
+            <th>Uploaded</th>
+            <th class="text-end pe-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in candidates %}
+          <tr>
+            <td class="ps-4 text-muted">{{ loop.index }}</td>
+            <td>
+              <div class="d-flex align-items-center gap-3">
+                <div class="candidate-avatar-sm">{{ (c.name or 'U')[0].upper() }}</div>
+                <div>
+                  <div class="fw-semibold">{{ c.name or 'Unknown' }}</div>
+                  <div class="text-muted small">ID: {{ c.id }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="text-sm">{{ c.email or '—' }}</div>
+              <div class="text-muted small">{{ c.phone or '—' }}</div>
+            </td>
+            <td>
+              <div class="skill-tags">
+                {% for skill in c.skills[:4] %}
+                  <span class="skill-tag">{{ skill }}</span>
+                {% endfor %}
+                {% if c.skills|length > 4 %}
+                  <span class="skill-tag-more">+{{ c.skills|length - 4 }}</span>
+                {% endif %}
+              </div>
+            </td>
+            <td>
+              {% if c.experience_years > 0 %}
+                <span class="badge bg-success">{{ c.experience_years }} yrs</span>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="file-badge {% if c.resume_filename.endswith('.pdf') %}pdf{% else %}docx{% endif %}">
+                <i class="bi bi-file-earmark-fill"></i>
+                {{ c.resume_filename[-20:] }}
+              </span>
+            </td>
+            <td class="text-muted small">
+              {{ c.uploaded_at.strftime('%d %b %Y') if c.uploaded_at else '—' }}
+            </td>
+            <td class="text-end pe-4">
+              <div class="d-flex justify-content-end gap-2">
+                <a href="{{ url_for('resume.candidate_detail', candidate_id=c.id) }}"
+                   class="btn btn-sm btn-outline-info">
+                  <i class="bi bi-eye-fill"></i>
+                </a>
+                <form method="POST"
+                      action="{{ url_for('resume.delete_candidate', candidate_id=c.id) }}"
+                      onsubmit="return confirm('Delete this candidate?')">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash-fill"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="glass-card p-5 text-center">
+    <div class="empty-state large">
+      <i class="bi bi-people-fill"></i>
+      <h5>No candidates yet</h5>
+      <p class="text-muted">Upload resumes to get started.</p>
+      <a href="{{ url_for('resume.upload') }}" class="btn btn-primary-custom">
+        <i class="bi bi-cloud-upload-fill me-2"></i>Upload Resumes
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

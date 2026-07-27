@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+
+  <!-- ── Stats Cards ──────────────────────────── -->
+  <div class="row g-4 mb-4">
+    <div class="col-sm-6 col-xl-3">
+      <div class="stat-card" style="--accent:#3b82f6">
+        <div class="stat-icon" style="background:rgba(59,130,246,.15);color:#3b82f6">
+          <i class="bi bi-people-fill"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ total_candidates }}</div>
+          <div class="stat-label">Total Candidates</div>
+        </div>
+        <a href="{{ url_for('main.all_candidates') }}" class="stat-link">
+          View all <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="stat-card" style="--accent:#10b981">
+        <div class="stat-icon" style="background:rgba(16,185,129,.15);color:#10b981">
+          <i class="bi bi-briefcase-fill"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ total_jobs }}</div>
+          <div class="stat-label">Active Jobs</div>
+        </div>
+        <a href="{{ url_for('job.job_list') }}" class="stat-link">
+          View all <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="stat-card" style="--accent:#f59e0b">
+        <div class="stat-icon" style="background:rgba(245,158,11,.15);color:#f59e0b">
+          <i class="bi bi-bar-chart-fill"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ total_results }}</div>
+          <div class="stat-label">Screenings Run</div>
+        </div>
+        <span class="stat-link text-muted">All time</span>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="stat-card" style="--accent:#8b5cf6">
+        <div class="stat-icon" style="background:rgba(139,92,246,.15);color:#8b5cf6">
+          <i class="bi bi-trophy-fill"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">
+            {% if top_result %}{{ top_result.match_score }}%{% else %}—{% endif %}
+          </div>
+          <div class="stat-label">Top Match Score</div>
+        </div>
+        {% if top_result %}
+        <a href="{{ url_for('resume.candidate_detail', candidate_id=top_result.candidate_id) }}"
+           class="stat-link">View candidate <i class="bi bi-arrow-right"></i></a>
+        {% else %}
+        <span class="stat-link text-muted">No screenings yet</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Quick Actions ─────────────────────────── -->
+  <div class="row g-4 mb-4">
+    <div class="col-12">
+      <div class="glass-card p-4">
+        <h6 class="card-section-title mb-3">Quick Actions</h6>
+        <div class="d-flex flex-wrap gap-3">
+          <a href="{{ url_for('resume.upload') }}" class="quick-action-btn" style="--c:#3b82f6">
+            <i class="bi bi-cloud-upload-fill"></i>
+            <span>Upload Resumes</span>
+          </a>
+          <a href="{{ url_for('job.new_job') }}" class="quick-action-btn" style="--c:#10b981">
+            <i class="bi bi-plus-circle-fill"></i>
+            <span>New Job</span>
+          </a>
+          <a href="{{ url_for('job.job_list') }}" class="quick-action-btn" style="--c:#f59e0b">
+            <i class="bi bi-play-circle-fill"></i>
+            <span>Run Screening</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Recent Candidates + Recent Jobs ────────── -->
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="glass-card p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="card-section-title mb-0">Recent Candidates</h6>
+          <a href="{{ url_for('main.all_candidates') }}" class="text-primary-custom small">View all</a>
+        </div>
+        {% if recent_candidates %}
+        <div class="candidate-list">
+          {% for c in recent_candidates %}
+          <a href="{{ url_for('resume.candidate_detail', candidate_id=c.id) }}" class="candidate-row">
+            <div class="candidate-avatar">{{ (c.name or 'U')[0].upper() }}</div>
+            <div class="candidate-info">
+              <div class="candidate-name">{{ c.name or 'Unknown' }}</div>
+              <div class="candidate-sub">{{ c.email or 'No email' }}</div>
+            </div>
+            <div class="candidate-meta">
+              <span class="badge-skill">{{ c.skills|length }} skills</span>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <i class="bi bi-person-plus-fill"></i>
+          <p>No candidates yet.<br/>
+            <a href="{{ url_for('resume.upload') }}">Upload your first resume →</a>
+          </p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="glass-card p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="card-section-title mb-0">Recent Jobs</h6>
+          <a href="{{ url_for('job.job_list') }}" class="text-primary-custom small">View all</a>
+        </div>
+        {% if recent_jobs %}
+        <div class="candidate-list">
+          {% for j in recent_jobs %}
+          <a href="{{ url_for('job.job_detail', job_id=j.id) }}" class="candidate-row">
+            <div class="candidate-avatar" style="background:rgba(16,185,129,.15);color:#10b981">
+              <i class="bi bi-briefcase-fill"></i>
+            </div>
+            <div class="candidate-info">
+              <div class="candidate-name">{{ j.title }}</div>
+              <div class="candidate-sub">{{ j.required_skills[:3]|join(', ') or 'No required skills listed' }}</div>
+            </div>
+            <div class="candidate-meta">
+              <a href="{{ url_for('job.results', job_id=j.id) }}"
+                 class="badge-skill" onclick="event.stopPropagation()">Results</a>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <i class="bi bi-briefcase-fill"></i>
+          <p>No jobs posted yet.<br/>
+            <a href="{{ url_for('job.new_job') }}">Create your first job →</a>
+          </p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

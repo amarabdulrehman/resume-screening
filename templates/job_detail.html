@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{{ job.title }}{% endblock %}
+{% block page_title %}Job Detail{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+  <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+    <div>
+      <h3 class="fw-bold mb-1">{{ job.title }}</h3>
+      <span class="text-muted">Posted {{ job.created_at.strftime('%d %b %Y') if job.created_at else '' }}</span>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <form method="POST" action="{{ url_for('job.screen', job_id=job.id) }}">
+        <button type="submit" class="btn btn-primary-custom">
+          <i class="bi bi-cpu-fill me-2"></i>Run AI Screening
+        </button>
+      </form>
+      <a href="{{ url_for('job.results', job_id=job.id) }}" class="btn btn-outline-success">
+        <i class="bi bi-bar-chart-fill me-2"></i>View Results
+      </a>
+      <form method="POST" action="{{ url_for('job.delete_job', job_id=job.id) }}"
+            onsubmit="return confirm('Delete this job?')">
+        <button type="submit" class="btn btn-outline-danger">
+          <i class="bi bi-trash-fill"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="glass-card p-4 h-100">
+        <h6 class="card-section-title mb-3">Job Description</h6>
+        <div class="jd-text">{{ job.description }}</div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="glass-card p-4 mb-4">
+        <h6 class="card-section-title mb-3">Required Skills</h6>
+        {% if job.required_skills %}
+          <div class="skill-tags">
+            {% for skill in job.required_skills %}
+              <span class="skill-tag green">{{ skill }}</span>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted small">No required skills specified.</p>
+        {% endif %}
+      </div>
+      <div class="glass-card p-4">
+        <h6 class="card-section-title mb-3">Screening Stats</h6>
+        {% set result_count = job.results|length %}
+        <div class="ds-stat-row">
+          <span class="text-muted">Candidates screened</span>
+          <span class="fw-semibold">{{ result_count }}</span>
+        </div>
+        {% if result_count > 0 %}
+        {% set top = job.results|sort(attribute='match_score', reverse=True)|first %}
+        <div class="ds-stat-row">
+          <span class="text-muted">Top score</span>
+          <span class="fw-semibold text-success">{{ top.match_score }}%</span>
+        </div>
+        {% endif %}
+        <a href="{{ url_for('job.results', job_id=job.id) }}" class="btn btn-sm btn-outline-info w-100 mt-3">
+          <i class="bi bi-list-ol me-2"></i>View Rankings
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

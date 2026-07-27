@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Post a Job{% endblock %}
+{% block page_title %}Post a Job{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <div class="glass-card p-5">
+        <h4 class="fw-bold mb-1">Create Job Description</h4>
+        <p class="text-muted mb-4">
+          Enter the job title, description, and required skills.
+          The AI will match all uploaded resumes against this posting.
+        </p>
+
+        <form method="POST">
+          <div class="mb-4">
+            <label for="title" class="form-label-custom">Job Title <span class="text-danger">*</span></label>
+            <input type="text" class="form-control form-control-custom" id="title" name="title"
+                   placeholder="e.g. Senior Python Developer, Data Analyst" required />
+          </div>
+
+          <div class="mb-4">
+            <label for="required_skills" class="form-label-custom">Required Skills
+              <span class="text-muted">(comma-separated)</span>
+            </label>
+            <input type="text" class="form-control form-control-custom" id="required_skills"
+                   name="required_skills"
+                   placeholder="e.g. python, machine learning, flask, sql, docker" />
+            <div id="skillPreview" class="skill-preview mt-2"></div>
+            <div class="form-text text-muted">
+              These are used for the <strong>skills overlap score</strong> in candidate matching.
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label for="description" class="form-label-custom">Job Description <span class="text-danger">*</span></label>
+            <textarea class="form-control form-control-custom" id="description" name="description"
+                      rows="12" required
+                      placeholder="Paste the full job description here.
+Include responsibilities, requirements, qualifications, and any other relevant information.
+The more detailed, the better the AI matching accuracy."></textarea>
+            <div class="d-flex justify-content-between mt-2">
+              <span class="form-text text-muted">Tip: paste the real JD for best matching accuracy.</span>
+              <span class="form-text text-muted" id="charCount">0 characters</span>
+            </div>
+          </div>
+
+          <div class="d-flex gap-3">
+            <button type="submit" class="btn btn-primary-custom flex-grow-1">
+              <i class="bi bi-plus-circle-fill me-2"></i>Create Job & Screen Candidates
+            </button>
+            <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Live skill tag preview
+const skillInput = document.getElementById('required_skills');
+const preview    = document.getElementById('skillPreview');
+skillInput.addEventListener('input', () => {
+  const skills = skillInput.value.split(',').map(s => s.trim()).filter(Boolean);
+  preview.innerHTML = skills.map(s =>
+    `<span class="skill-tag">${s}</span>`
+  ).join('');
+});
+
+// Char counter
+const desc      = document.getElementById('description');
+const charCount = document.getElementById('charCount');
+desc.addEventListener('input', () => {
+  charCount.textContent = desc.value.length + ' characters';
+});
+</script>
+{% endblock %}

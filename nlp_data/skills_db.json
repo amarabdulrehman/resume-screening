@@ -1,0 +1,56 @@
+{
+  "programming_languages": [
+    "python", "java", "javascript", "typescript", "c", "c++", "c#", "go", "golang",
+    "rust", "swift", "kotlin", "r", "matlab", "scala", "php", "ruby", "perl",
+    "bash", "shell", "powershell", "dart", "lua", "haskell", "julia"
+  ],
+  "web_frontend": [
+    "html", "css", "react", "reactjs", "react.js", "angular", "angularjs",
+    "vue", "vuejs", "vue.js", "next.js", "nextjs", "nuxt.js", "svelte",
+    "bootstrap", "tailwind", "tailwindcss", "jquery", "sass", "scss",
+    "webpack", "vite", "redux", "graphql", "rest api", "restful"
+  ],
+  "web_backend": [
+    "flask", "django", "fastapi", "node.js", "nodejs", "express", "expressjs",
+    "spring", "spring boot", "laravel", "rails", "ruby on rails", "asp.net",
+    ".net", "dotnet", "hibernate", "sqlalchemy", "celery", "nginx", "apache"
+  ],
+  "databases": [
+    "mysql", "postgresql", "postgres", "sqlite", "mongodb", "redis",
+    "elasticsearch", "cassandra", "oracle", "sql server", "mssql",
+    "dynamodb", "firebase", "supabase", "mariadb", "neo4j"
+  ],
+  "cloud_devops": [
+    "aws", "azure", "gcp", "google cloud", "docker", "kubernetes", "k8s",
+    "terraform", "ansible", "jenkins", "ci/cd", "github actions", "gitlab ci",
+    "linux", "unix", "heroku", "vercel", "netlify", "cloudflare"
+  ],
+  "machine_learning": [
+    "machine learning", "deep learning", "neural network", "nlp",
+    "natural language processing", "computer vision", "tensorflow", "keras",
+    "pytorch", "scikit-learn", "sklearn", "xgboost", "lightgbm", "catboost",
+    "pandas", "numpy", "matplotlib", "seaborn", "opencv", "hugging face",
+    "transformers", "bert", "gpt", "llm", "generative ai", "rag",
+    "reinforcement learning", "random forest", "svm", "regression", "classification",
+    "clustering", "pca", "feature engineering", "model deployment", "mlops"
+  ],
+  "data_engineering": [
+    "spark", "apache spark", "hadoop", "kafka", "airflow", "dbt",
+    "etl", "data pipeline", "data warehouse", "snowflake", "bigquery",
+    "tableau", "power bi", "looker", "data studio", "excel"
+  ],
+  "mobile": [
+    "android", "ios", "react native", "flutter", "swift", "kotlin",
+    "xamarin", "ionic", "cordova", "expo"
+  ],
+  "tools": [
+    "git", "github", "gitlab", "bitbucket", "jira", "confluence",
+    "slack", "postman", "swagger", "vs code", "intellij", "pycharm",
+    "jupyter", "notion", "figma", "adobe xd", "linux", "agile", "scrum"
+  ],
+  "soft_skills": [
+    "communication", "teamwork", "leadership", "problem solving",
+    "critical thinking", "time management", "project management",
+    "presentation", "analytical", "collaboration"
+  ]
+}
