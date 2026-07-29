@@ -1,13 +1,20 @@
 {% extends "base.html" %}
 {% block title %}All Jobs{% endblock %}
-{% block page_title %}All Jobs{% endblock %}
+{% block page_title %}Jobs{% endblock %}
 
 {% block content %}
 <div class="fade-in">
+
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <p class="text-muted mb-0">{{ jobs|length }} job(s) created</p>
-    <a href="{{ url_for('job.new_job') }}" class="btn btn-primary-custom btn-sm">
-      <i class="bi bi-plus-lg me-1"></i>New Job
+    <div>
+      <h1 class="page-heading mb-1">All Jobs</h1>
+      <p style="color:var(--text-secondary);font-size:0.875rem;margin:0">
+        <span class="count-badge">{{ jobs|length }}</span>
+        job posting{{ 's' if jobs|length != 1 else '' }}
+      </p>
+    </div>
+    <a href="{{ url_for('job.new_job') }}" class="btn btn-primary-custom">
+      <i class="bi bi-plus-lg me-2"></i>New Job
     </a>
   </div>
 
@@ -15,16 +22,24 @@
   <div class="row g-4">
     {% for job in jobs %}
     <div class="col-md-6 col-xl-4">
-      <div class="glass-card p-4 h-100 job-card">
+      <div class="glass-card p-4 h-100 job-card d-flex flex-column">
+
+        <!-- Card Header -->
         <div class="d-flex justify-content-between align-items-start mb-3">
           <div class="job-icon">
             <i class="bi bi-briefcase-fill"></i>
           </div>
-          <span class="text-muted small">{{ job.created_at.strftime('%d %b %Y') if job.created_at else '' }}</span>
+          <span style="font-size:0.73rem;color:var(--text-muted);background:rgba(255,255,255,0.04);border:1px solid var(--border);padding:3px 10px;border-radius:6px">
+            {{ job.created_at.strftime('%d %b %Y') if job.created_at else '' }}
+          </span>
         </div>
 
-        <h5 class="fw-bold mb-2">{{ job.title }}</h5>
-        <p class="text-muted small mb-3">{{ job.description[:120] }}…</p>
+        <h5 style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.05rem;margin-bottom:8px">
+          {{ job.title }}
+        </h5>
+        <p style="color:var(--text-secondary);font-size:0.82rem;line-height:1.6;flex-grow:1;margin-bottom:14px">
+          {{ job.description[:130] }}…
+        </p>
 
         {% if job.required_skills %}
         <div class="skill-tags mb-3">
@@ -37,12 +52,12 @@
         </div>
         {% endif %}
 
-        <div class="ds-stat-row mb-3">
-          <span class="text-muted small">Candidates screened</span>
-          <span class="fw-semibold">{{ job.results|length }}</span>
+        <div class="ds-stat-row">
+          <span style="color:var(--text-secondary);font-size:0.82rem">Screened candidates</span>
+          <span style="font-weight:700;font-size:0.875rem">{{ job.results|length }}</span>
         </div>
 
-        <div class="d-flex gap-2 mt-auto">
+        <div class="d-flex gap-2 mt-3">
           <a href="{{ url_for('job.job_detail', job_id=job.id) }}"
              class="btn btn-sm btn-primary-custom flex-grow-1">
             <i class="bi bi-eye-fill me-1"></i>View
@@ -56,17 +71,19 @@
     </div>
     {% endfor %}
   </div>
+
   {% else %}
-  <div class="glass-card p-5 text-center">
-    <div class="empty-state large">
+  <div class="glass-card p-5">
+    <div class="empty-state large py-4">
       <i class="bi bi-briefcase-fill"></i>
-      <h5>No jobs yet</h5>
-      <p class="text-muted">Create a job to start screening candidates.</p>
+      <h5>No Jobs Yet</h5>
+      <p>Create a job description to start matching candidates with AI.</p>
       <a href="{{ url_for('job.new_job') }}" class="btn btn-primary-custom">
-        <i class="bi bi-plus-circle-fill me-2"></i>Create Job
+        <i class="bi bi-plus-circle-fill me-2"></i>Create First Job
       </a>
     </div>
   </div>
   {% endif %}
+
 </div>
 {% endblock %}

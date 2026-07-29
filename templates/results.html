@@ -1,27 +1,30 @@
 {% extends "base.html" %}
-{% block title %}Results — {{ job.title }}{% endblock %}
+{% block title %}Screening Results — {{ job.title }}{% endblock %}
 {% block page_title %}Screening Results{% endblock %}
 
 {% block content %}
 <div class="fade-in">
 
   <!-- Header -->
-  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
-    <div>
-      <h4 class="fw-bold mb-1">{{ job.title }}</h4>
-      <p class="text-muted mb-0">
-        {{ results|length }} candidate(s) ranked by AI match score
-      </p>
-    </div>
-    <div class="d-flex gap-2 flex-wrap">
-      <form method="POST" action="{{ url_for('job.screen', job_id=job.id) }}">
-        <button type="submit" class="btn btn-sm btn-outline-primary">
-          <i class="bi bi-arrow-clockwise me-1"></i>Re-screen
-        </button>
-      </form>
-      <a href="{{ url_for('job.job_detail', job_id=job.id) }}" class="btn btn-sm btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i>Back to Job
-      </a>
+  <div class="glass-card p-4 mb-4" style="border-left:3px solid var(--primary);background:linear-gradient(90deg,rgba(79,142,247,0.06) 0%,transparent 60%)">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+      <div>
+        <h2 class="page-heading mb-1">{{ job.title }}</h2>
+        <p style="color:var(--text-secondary);font-size:0.875rem;margin:0">
+          <i class="bi bi-people-fill me-2" style="color:var(--primary)"></i>
+          {{ results|length }} candidate{{ 's' if results|length != 1 else '' }} ranked by AI match score
+        </p>
+      </div>
+      <div class="d-flex gap-2 flex-wrap align-items-center">
+        <form method="POST" action="{{ url_for('job.screen', job_id=job.id) }}">
+          <button type="submit" class="btn btn-primary-custom btn-sm">
+            <i class="bi bi-arrow-clockwise me-1"></i>Re-screen
+          </button>
+        </form>
+        <a href="{{ url_for('job.job_detail', job_id=job.id) }}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-arrow-left me-1"></i>Back to Job
+        </a>
+      </div>
     </div>
   </div>
 
@@ -31,8 +34,7 @@
   {% if results|length >= 3 %}
   <div class="podium-row mb-4">
     {% set medals = ['🥇','🥈','🥉'] %}
-    {% set cols   = [results[0], results[1], results[2]] %}
-    {% for res in cols %}
+    {% for res in [results[0], results[1], results[2]] %}
     <div class="podium-card {% if loop.index == 1 %}gold{% elif loop.index == 2 %}silver{% else %}bronze{% endif %}">
       <div class="podium-medal">{{ medals[loop.index0] }}</div>
       <div class="podium-rank">Rank #{{ res.rank }}</div>
@@ -42,14 +44,20 @@
         <div class="score-bar" style="width:{{ res.match_score }}%"></div>
       </div>
       <a href="{{ url_for('resume.candidate_detail', candidate_id=res.candidate_id) }}"
-         class="btn btn-sm btn-outline-light mt-3">Profile</a>
+         class="btn btn-sm btn-outline-light mt-2">View Profile</a>
     </div>
     {% endfor %}
   </div>
   {% endif %}
 
   <!-- Full Rankings Table -->
-  <div class="glass-card p-0 overflow-hidden">
+  <div class="glass-card overflow-hidden">
+    <div class="p-4 border-bottom" style="border-color:var(--border) !important">
+      <h6 class="card-section-title mb-0">
+        <i class="bi bi-list-ol" style="color:var(--primary)"></i>
+        Full Rankings
+      </h6>
+    </div>
     <div class="table-responsive">
       <table class="table table-dark table-hover align-middle mb-0">
         <thead>
@@ -67,18 +75,14 @@
           {% for res in results %}
           <tr>
             <td class="ps-4">
-              <span class="rank-badge rank-{{ res.rank if res.rank <= 3 else 'other' }}">
-                #{{ res.rank }}
-              </span>
+              <span class="rank-badge rank-{{ res.rank if res.rank <= 3 else 'other' }}">#{{ res.rank }}</span>
             </td>
             <td>
-              <div class="d-flex align-items-center gap-2">
-                <div class="candidate-avatar-sm">
-                  {{ (res.candidate.name or 'U')[0].upper() }}
-                </div>
+              <div class="d-flex align-items-center gap-3">
+                <div class="candidate-avatar-sm">{{ (res.candidate.name or 'U')[0].upper() }}</div>
                 <div>
-                  <div class="fw-semibold">{{ res.candidate.name or 'Unknown' }}</div>
-                  <div class="text-muted small">{{ res.candidate.email or '' }}</div>
+                  <div class="fw-semibold" style="font-size:0.875rem">{{ res.candidate.name or 'Unknown' }}</div>
+                  <div style="font-size:0.75rem;color:var(--text-secondary)">{{ res.candidate.email or '' }}</div>
                 </div>
               </div>
             </td>
@@ -93,19 +97,13 @@
                 </div>
               </div>
             </td>
-            <td>
-              <span class="text-info">{{ (res.tfidf_score * 100)|round(1) }}%</span>
-            </td>
-            <td>
-              <span class="text-success">{{ (res.skill_overlap * 100)|round(1) }}%</span>
-            </td>
-            <td>
-              <span class="text-warning">{{ (res.exp_bonus * 100)|round(1) }}%</span>
-            </td>
+            <td><span style="color:#67e8f9;font-weight:600">{{ (res.tfidf_score * 100)|round(1) }}%</span></td>
+            <td><span style="color:var(--success);font-weight:600">{{ (res.skill_overlap * 100)|round(1) }}%</span></td>
+            <td><span style="color:var(--warning);font-weight:600">{{ (res.exp_bonus * 100)|round(1) }}%</span></td>
             <td class="pe-4 text-end">
               <a href="{{ url_for('resume.candidate_detail', candidate_id=res.candidate_id) }}"
                  class="btn btn-sm btn-outline-info">
-                <i class="bi bi-eye-fill"></i> View
+                <i class="bi bi-eye-fill me-1"></i>Profile
               </a>
             </td>
           </tr>
@@ -116,14 +114,14 @@
   </div>
 
   {% else %}
-  <div class="glass-card p-5 text-center">
-    <div class="empty-state large">
+  <div class="glass-card p-5">
+    <div class="empty-state large py-4">
       <i class="bi bi-bar-chart-fill"></i>
-      <h5>No results yet</h5>
-      <p class="text-muted">Run the AI screening to rank candidates.</p>
+      <h5>No Results Yet</h5>
+      <p>Run the AI screening engine to rank all uploaded candidates against this job.</p>
       <form method="POST" action="{{ url_for('job.screen', job_id=job.id) }}">
         <button type="submit" class="btn btn-primary-custom">
-          <i class="bi bi-cpu-fill me-2"></i>Run Screening Now
+          <i class="bi bi-cpu-fill me-2"></i>Run AI Screening Now
         </button>
       </form>
     </div>

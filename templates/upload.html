@@ -5,27 +5,26 @@
 {% block content %}
 <div class="fade-in">
   <div class="row justify-content-center">
-    <div class="col-lg-8">
+    <div class="col-lg-7">
+
+      <!-- Page heading -->
+      <div class="text-center mb-5">
+        <h1 class="page-heading mb-2">Upload Candidate Resumes</h1>
+        <p style="color:var(--text-secondary);font-size:0.9rem">Supports <strong style="color:var(--text-primary)">PDF</strong> and <strong style="color:var(--text-primary)">DOCX</strong> formats — upload multiple files at once.</p>
+      </div>
 
       <div class="glass-card p-5">
-        <h4 class="fw-bold mb-1">Upload Candidate Resumes</h4>
-        <p class="text-muted mb-4">
-          Supports <strong>PDF</strong> and <strong>DOCX</strong> formats.
-          Upload multiple files at once — the AI will extract all candidate information automatically.
-        </p>
-
         <form id="uploadForm" method="POST" enctype="multipart/form-data">
+
           <!-- Drop Zone -->
           <div class="drop-zone" id="dropZone">
-            <div class="drop-zone-inner">
-              <div class="drop-icon">
-                <i class="bi bi-cloud-arrow-up-fill"></i>
-              </div>
-              <h5 class="drop-title">Drag & Drop Resumes Here</h5>
-              <p class="drop-sub">or click to browse files</p>
+            <div class="drop-zone-inner" style="position:relative;z-index:1">
+              <i class="bi bi-cloud-arrow-up-fill drop-icon"></i>
+              <h5 class="drop-title">Drag &amp; Drop Resumes Here</h5>
+              <p class="drop-sub mb-4">or click the button below to browse files</p>
               <input type="file" id="resumeInput" name="resumes"
                      accept=".pdf,.docx" multiple hidden />
-              <button type="button" class="btn btn-primary-custom mt-3" id="browseBtn">
+              <button type="button" class="btn btn-primary-custom" id="browseBtn">
                 <i class="bi bi-folder2-open me-2"></i>Browse Files
               </button>
             </div>
@@ -37,23 +36,29 @@
           <!-- Upload Button -->
           <button type="submit" class="btn btn-success-custom w-100 mt-4" id="uploadBtn" disabled>
             <i class="bi bi-cpu-fill me-2"></i>
-            <span id="uploadBtnText">Process & Extract Information</span>
+            <span id="uploadBtnText">Process &amp; Extract Information</span>
           </button>
         </form>
 
+        <hr class="section-divider">
+
         <!-- Info Strip -->
-        <div class="info-strip mt-4">
+        <div class="info-strip">
           <div class="info-item">
-            <i class="bi bi-person-badge-fill text-info"></i>
-            <span>Name & Contact extraction</span>
+            <i class="bi bi-person-badge-fill" style="color:var(--primary)"></i>
+            <span>Name &amp; contact extraction</span>
           </div>
           <div class="info-item">
-            <i class="bi bi-code-slash text-success"></i>
-            <span>Skills detection (150+ keywords)</span>
+            <i class="bi bi-code-slash" style="color:var(--success)"></i>
+            <span>150+ skill keywords detected</span>
           </div>
           <div class="info-item">
-            <i class="bi bi-mortarboard-fill text-warning"></i>
-            <span>Education & Experience parsing</span>
+            <i class="bi bi-mortarboard-fill" style="color:var(--warning)"></i>
+            <span>Education &amp; experience parsing</span>
+          </div>
+          <div class="info-item">
+            <i class="bi bi-shield-check-fill" style="color:var(--accent)"></i>
+            <span>Stored securely in SQLite DB</span>
           </div>
         </div>
       </div>
@@ -73,7 +78,6 @@ const uploadBtn  = document.getElementById('uploadBtn');
 const uploadForm = document.getElementById('uploadForm');
 
 browseBtn.addEventListener('click', () => fileInput.click());
-
 fileInput.addEventListener('change', () => showFiles(fileInput.files));
 
 dropZone.addEventListener('dragover', e => {
@@ -84,9 +88,8 @@ dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragging
 dropZone.addEventListener('drop', e => {
   e.preventDefault();
   dropZone.classList.remove('dragging');
-  const files = e.dataTransfer.files;
-  fileInput.files = files;
-  showFiles(files);
+  fileInput.files = e.dataTransfer.files;
+  showFiles(e.dataTransfer.files);
 });
 
 function showFiles(files) {
@@ -94,24 +97,30 @@ function showFiles(files) {
   fileList.classList.remove('d-none');
   fileList.innerHTML = '';
   Array.from(files).forEach(f => {
-    const icon = f.name.endsWith('.pdf') ? 'bi-file-pdf-fill' : 'bi-file-earmark-word-fill';
-    const color = f.name.endsWith('.pdf') ? '#ef4444' : '#3b82f6';
+    const isPdf  = f.name.toLowerCase().endsWith('.pdf');
+    const icon   = isPdf ? 'bi-file-pdf-fill' : 'bi-file-earmark-word-fill';
+    const color  = isPdf ? 'var(--danger)' : 'var(--primary)';
+    const size   = f.size < 1024*1024 ? (f.size/1024).toFixed(1)+' KB' : (f.size/1024/1024).toFixed(2)+' MB';
     fileList.innerHTML += `
       <div class="file-item">
-        <i class="bi ${icon}" style="color:${color}; font-size:1.4rem"></i>
+        <i class="bi ${icon}" style="color:${color};font-size:1.5rem;flex-shrink:0"></i>
         <div class="file-info">
           <div class="file-name">${f.name}</div>
-          <div class="file-size">${(f.size/1024).toFixed(1)} KB</div>
+          <div class="file-size">${size}</div>
         </div>
-        <i class="bi bi-check-circle-fill text-success"></i>
+        <i class="bi bi-check-circle-fill" style="color:var(--success);font-size:1.1rem"></i>
       </div>`;
   });
   uploadBtn.disabled = false;
+  const count = files.length;
+  document.getElementById('uploadBtnText').textContent =
+    `Process ${count} File${count > 1 ? 's' : ''} with AI`;
 }
 
 uploadForm.addEventListener('submit', () => {
   uploadBtn.disabled = true;
   document.getElementById('uploadBtnText').textContent = 'Processing… please wait';
+  uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Processing…';
 });
 </script>
 {% endblock %}

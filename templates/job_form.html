@@ -1,59 +1,100 @@
 {% extends "base.html" %}
 {% block title %}Post a Job{% endblock %}
-{% block page_title %}Post a Job{% endblock %}
+{% block page_title %}New Job{% endblock %}
 
 {% block content %}
 <div class="fade-in">
   <div class="row justify-content-center">
     <div class="col-lg-9">
-      <div class="glass-card p-5">
-        <h4 class="fw-bold mb-1">Create Job Description</h4>
-        <p class="text-muted mb-4">
-          Enter the job title, description, and required skills.
-          The AI will match all uploaded resumes against this posting.
-        </p>
 
+      <!-- Page heading -->
+      <div class="text-center mb-5">
+        <h1 class="page-heading mb-2">Create a Job Posting</h1>
+        <p style="color:var(--text-secondary);font-size:0.9rem">
+          Fill in the job details — the AI will automatically screen all uploaded resumes against this description.
+        </p>
+      </div>
+
+      <div class="glass-card p-5">
         <form method="POST">
+
+          <!-- Job Title -->
           <div class="mb-4">
-            <label for="title" class="form-label-custom">Job Title <span class="text-danger">*</span></label>
+            <label for="title" class="form-label-custom">
+              Job Title <span style="color:var(--danger)">*</span>
+            </label>
             <input type="text" class="form-control form-control-custom" id="title" name="title"
-                   placeholder="e.g. Senior Python Developer, Data Analyst" required />
+                   placeholder="e.g. Senior Python Developer, Data Analyst, ML Engineer" required />
           </div>
 
+          <!-- Required Skills -->
           <div class="mb-4">
-            <label for="required_skills" class="form-label-custom">Required Skills
-              <span class="text-muted">(comma-separated)</span>
+            <label for="required_skills" class="form-label-custom">
+              Required Skills
+              <span style="color:var(--text-muted);text-transform:none;letter-spacing:0;font-weight:500;font-size:0.78rem">(comma-separated)</span>
             </label>
             <input type="text" class="form-control form-control-custom" id="required_skills"
                    name="required_skills"
                    placeholder="e.g. python, machine learning, flask, sql, docker" />
             <div id="skillPreview" class="skill-preview mt-2"></div>
-            <div class="form-text text-muted">
-              These are used for the <strong>skills overlap score</strong> in candidate matching.
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:6px">
+              <i class="bi bi-info-circle me-1"></i>
+              Skills are used for the <strong style="color:var(--text-secondary)">skills overlap score</strong> in candidate matching.
             </div>
           </div>
 
-          <div class="mb-4">
-            <label for="description" class="form-label-custom">Job Description <span class="text-danger">*</span></label>
+          <!-- Job Description -->
+          <div class="mb-5">
+            <label for="description" class="form-label-custom">
+              Job Description <span style="color:var(--danger)">*</span>
+            </label>
             <textarea class="form-control form-control-custom" id="description" name="description"
                       rows="12" required
                       placeholder="Paste the full job description here.
 Include responsibilities, requirements, qualifications, and any other relevant information.
-The more detailed, the better the AI matching accuracy."></textarea>
+The more detailed the description, the better the AI matching accuracy."></textarea>
             <div class="d-flex justify-content-between mt-2">
-              <span class="form-text text-muted">Tip: paste the real JD for best matching accuracy.</span>
-              <span class="form-text text-muted" id="charCount">0 characters</span>
+              <span style="font-size:0.75rem;color:var(--text-muted)">
+                <i class="bi bi-lightbulb me-1" style="color:var(--warning)"></i>
+                Tip: paste the real JD for best matching accuracy
+              </span>
+              <span style="font-size:0.75rem;color:var(--text-muted)" id="charCount">0 characters</span>
+            </div>
+          </div>
+
+          <hr class="section-divider">
+
+          <!-- What happens next -->
+          <div class="info-strip mb-4">
+            <div class="info-item">
+              <i class="bi bi-cpu-fill" style="color:var(--primary)"></i>
+              <span>TF-IDF text matching</span>
+            </div>
+            <div class="info-item">
+              <i class="bi bi-diagram-3-fill" style="color:var(--success)"></i>
+              <span>Skills overlap scoring</span>
+            </div>
+            <div class="info-item">
+              <i class="bi bi-award-fill" style="color:var(--warning)"></i>
+              <span>Experience bonus applied</span>
+            </div>
+            <div class="info-item">
+              <i class="bi bi-trophy-fill" style="color:var(--accent)"></i>
+              <span>Candidates ranked instantly</span>
             </div>
           </div>
 
           <div class="d-flex gap-3">
-            <button type="submit" class="btn btn-primary-custom flex-grow-1">
-              <i class="bi bi-plus-circle-fill me-2"></i>Create Job & Screen Candidates
+            <button type="submit" class="btn btn-primary-custom flex-grow-1" style="padding:14px">
+              <i class="bi bi-plus-circle-fill me-2"></i>Create Job &amp; Screen Candidates
             </button>
-            <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Cancel</a>
+            <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary" style="padding:14px 20px">
+              Cancel
+            </a>
           </div>
         </form>
       </div>
+
     </div>
   </div>
 </div>
@@ -75,7 +116,9 @@ skillInput.addEventListener('input', () => {
 const desc      = document.getElementById('description');
 const charCount = document.getElementById('charCount');
 desc.addEventListener('input', () => {
-  charCount.textContent = desc.value.length + ' characters';
+  const len = desc.value.length;
+  charCount.textContent = len.toLocaleString() + ' characters';
+  charCount.style.color = len < 100 ? 'var(--warning)' : 'var(--text-muted)';
 });
 </script>
 {% endblock %}

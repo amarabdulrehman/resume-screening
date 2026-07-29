@@ -6,23 +6,32 @@
 <div class="fade-in">
 
   <!-- Profile Header -->
-  <div class="profile-header glass-card p-5 mb-4">
-    <div class="d-flex align-items-center gap-4 flex-wrap">
+  <div class="glass-card p-5 mb-4 position-relative overflow-hidden" style="border-top:2px solid var(--primary);background:linear-gradient(135deg,rgba(79,142,247,0.06) 0%,rgba(167,139,250,0.03) 100%)">
+    <div style="position:absolute;top:-40px;right:-40px;width:240px;height:240px;background:radial-gradient(circle,rgba(79,142,247,0.08) 0%,transparent 70%);border-radius:50%;pointer-events:none"></div>
+    <div class="d-flex align-items-center gap-4 flex-wrap" style="position:relative;z-index:1">
       <div class="profile-avatar">{{ (candidate.name or 'U')[0].upper() }}</div>
       <div class="flex-grow-1">
-        <h3 class="fw-bold mb-1">{{ candidate.name or 'Unknown Candidate' }}</h3>
-        <div class="d-flex flex-wrap gap-3 text-muted">
+        <h2 class="page-heading mb-1">{{ candidate.name or 'Unknown Candidate' }}</h2>
+        <div class="d-flex flex-wrap gap-4 mt-2">
           {% if candidate.email %}
-          <span><i class="bi bi-envelope-fill me-1 text-info"></i>{{ candidate.email }}</span>
+          <span style="font-size:0.875rem;color:var(--text-secondary)">
+            <i class="bi bi-envelope-fill me-2" style="color:#67e8f9"></i>{{ candidate.email }}
+          </span>
           {% endif %}
           {% if candidate.phone %}
-          <span><i class="bi bi-telephone-fill me-1 text-success"></i>{{ candidate.phone }}</span>
+          <span style="font-size:0.875rem;color:var(--text-secondary)">
+            <i class="bi bi-telephone-fill me-2" style="color:var(--success)"></i>{{ candidate.phone }}
+          </span>
           {% endif %}
+          <span style="font-size:0.875rem;color:var(--text-secondary)">
+            <i class="bi bi-calendar3 me-2" style="color:var(--warning)"></i>
+            Uploaded {{ candidate.uploaded_at.strftime('%d %b %Y') if candidate.uploaded_at else 'N/A' }}
+          </span>
         </div>
       </div>
       <div class="profile-actions">
         {% if results %}
-          {% set best = results[0] %}
+          {% set best = results|sort(attribute='match_score', reverse=True)|first %}
           <div class="best-score-badge">
             <span class="score-label">Best Match</span>
             <span class="score-value {% if best.match_score >= 70 %}text-success{% elif best.match_score >= 40 %}text-warning{% else %}text-danger{% endif %}">
@@ -36,7 +45,7 @@
         </a>
         <form method="POST"
               action="{{ url_for('resume.delete_candidate', candidate_id=candidate.id) }}"
-              onsubmit="return confirm('Delete this candidate?')">
+              onsubmit="return confirm('Delete this candidate and all their screening results?')">
           <button type="submit" class="btn btn-outline-danger btn-sm">
             <i class="bi bi-trash-fill"></i>
           </button>
@@ -47,14 +56,15 @@
 
   <div class="row g-4">
 
-    <!-- Left Column: Info -->
+    <!-- Left: Info -->
     <div class="col-lg-7">
 
       <!-- Skills -->
       <div class="glass-card p-4 mb-4">
         <h6 class="card-section-title mb-3">
-          <i class="bi bi-code-slash me-2 text-primary-custom"></i>
-          Detected Skills ({{ candidate.skills|length }})
+          <i class="bi bi-code-slash" style="color:var(--primary)"></i>
+          Detected Skills
+          <span class="count-badge ms-2">{{ candidate.skills|length }}</span>
         </h6>
         {% if candidate.skills %}
           <div class="skill-tags">
@@ -63,86 +73,92 @@
             {% endfor %}
           </div>
         {% else %}
-          <p class="text-muted">No skills detected.</p>
+          <p style="color:var(--text-muted);font-size:0.875rem">No skills detected from this resume.</p>
         {% endif %}
       </div>
 
       <!-- Education -->
       <div class="glass-card p-4 mb-4">
         <h6 class="card-section-title mb-3">
-          <i class="bi bi-mortarboard-fill me-2 text-warning"></i>Education
+          <i class="bi bi-mortarboard-fill" style="color:var(--warning)"></i>
+          Education
         </h6>
-        <p class="text-muted small mb-0">{{ candidate.education or 'Not detected.' }}</p>
+        <p style="color:var(--text-secondary);font-size:0.875rem;line-height:1.7;margin:0">
+          {{ candidate.education or 'Education information not detected.' }}
+        </p>
       </div>
 
       <!-- Experience -->
       <div class="glass-card p-4">
         <h6 class="card-section-title mb-3">
-          <i class="bi bi-briefcase-fill me-2 text-success"></i>Experience
+          <i class="bi bi-briefcase-fill" style="color:var(--success)"></i>
+          Experience
           {% if candidate.experience_years %}
-            <span class="badge bg-success ms-2">{{ candidate.experience_years }} years</span>
+            <span style="background:rgba(16,217,160,0.1);color:var(--success);border:1px solid rgba(16,217,160,0.2);padding:2px 10px;border-radius:6px;font-size:0.72rem;font-weight:700;margin-left:8px">
+              {{ candidate.experience_years }} years
+            </span>
           {% endif %}
         </h6>
         {% if candidate.experience_text %}
           <pre class="experience-pre">{{ candidate.experience_text[:800] }}</pre>
         {% else %}
-          <p class="text-muted">Not detected.</p>
+          <p style="color:var(--text-muted);font-size:0.875rem">Experience information not detected.</p>
         {% endif %}
       </div>
 
     </div>
 
-    <!-- Right Column: Screening Results -->
+    <!-- Right: Screening Results -->
     <div class="col-lg-5">
       <div class="glass-card p-4 mb-4">
-        <h6 class="card-section-title mb-3">
-          <i class="bi bi-bar-chart-fill me-2 text-info"></i>
+        <h6 class="card-section-title mb-4">
+          <i class="bi bi-bar-chart-fill" style="color:#67e8f9"></i>
           Screening Results
+          {% if results %}<span class="count-badge ms-2">{{ results|length }}</span>{% endif %}
         </h6>
         {% if results %}
           {% for res in results %}
-          <div class="result-item mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="text-sm fw-semibold">{{ res.job.title }}</span>
+          <div class="{% if not loop.first %}pt-3 mt-3{% endif %}" style="{% if not loop.last %}border-bottom:1px solid rgba(255,255,255,0.05);padding-bottom:16px{% endif %}">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span style="font-weight:700;font-size:0.875rem;color:var(--text-primary)">{{ res.job.title }}</span>
               <span class="score-pill {% if res.match_score >= 70 %}high{% elif res.match_score >= 40 %}mid{% else %}low{% endif %} sm">
-                Rank #{{ res.rank }} — {{ res.match_score }}%
+                #{{ res.rank }} · {{ res.match_score }}%
               </span>
             </div>
             <!-- Score Breakdown -->
             <div class="score-breakdown">
               <div class="breakdown-row">
-                <span class="text-muted small">Text Match</span>
+                <span>Text Match</span>
                 <div class="breakdown-bar-wrap">
                   <div class="breakdown-bar blue" style="width:{{ (res.tfidf_score*100)|round(0) }}%"></div>
                 </div>
-                <span class="text-info small">{{ (res.tfidf_score*100)|round(1) }}%</span>
+                <span style="color:#67e8f9">{{ (res.tfidf_score*100)|round(1) }}%</span>
               </div>
               <div class="breakdown-row">
-                <span class="text-muted small">Skills</span>
+                <span>Skills</span>
                 <div class="breakdown-bar-wrap">
                   <div class="breakdown-bar green" style="width:{{ (res.skill_overlap*100)|round(0) }}%"></div>
                 </div>
-                <span class="text-success small">{{ (res.skill_overlap*100)|round(1) }}%</span>
+                <span style="color:var(--success)">{{ (res.skill_overlap*100)|round(1) }}%</span>
               </div>
               <div class="breakdown-row">
-                <span class="text-muted small">Experience</span>
+                <span>Experience</span>
                 <div class="breakdown-bar-wrap">
                   <div class="breakdown-bar yellow" style="width:{{ (res.exp_bonus*100)|round(0) }}%"></div>
                 </div>
-                <span class="text-warning small">{{ (res.exp_bonus*100)|round(1) }}%</span>
+                <span style="color:var(--warning)">{{ (res.exp_bonus*100)|round(1) }}%</span>
               </div>
             </div>
             <a href="{{ url_for('job.results', job_id=res.job_id) }}"
                class="btn btn-sm btn-outline-secondary mt-2 w-100">
-              View Full Rankings
+              <i class="bi bi-list-ol me-1"></i>Full Rankings
             </a>
           </div>
-          {% if not loop.last %}<hr class="border-secondary">{% endif %}
           {% endfor %}
         {% else %}
-          <div class="empty-state">
+          <div class="empty-state py-3">
             <i class="bi bi-clipboard-data-fill"></i>
-            <p>No screenings yet for this candidate.<br/>
+            <p>No screenings yet.<br/>
               <a href="{{ url_for('job.job_list') }}">Select a job to screen →</a>
             </p>
           </div>
@@ -151,12 +167,14 @@
 
       <!-- Radar Chart -->
       {% if results %}
-      {% set res = results[0] %}
+      {% set res = results|sort(attribute='match_score', reverse=True)|first %}
       <div class="glass-card p-4">
         <h6 class="card-section-title mb-3">
-          <i class="bi bi-diagram-3-fill me-2 text-purple"></i>Score Radar
+          <i class="bi bi-diagram-3-fill" style="color:var(--accent)"></i>
+          Score Radar
+          <span style="color:var(--text-muted);font-size:0.72rem;font-weight:400;text-transform:none;letter-spacing:0">— best match</span>
         </h6>
-        <canvas id="radarChart" height="250"></canvas>
+        <canvas id="radarChart" height="260"></canvas>
       </div>
       {% endif %}
     </div>
@@ -167,25 +185,27 @@
 
 {% block scripts %}
 {% if results %}
-{% set res = results[0] %}
+{% set res = results|sort(attribute='match_score', reverse=True)|first %}
 <script>
 new Chart(document.getElementById('radarChart'), {
   type: 'radar',
   data: {
     labels: ['Text Match', 'Skills Overlap', 'Experience', 'Overall Score'],
     datasets: [{
-      label: 'Candidate Scores',
+      label: '{{ candidate.name or "Candidate" }}',
       data: [
         {{ (res.tfidf_score * 100)|round(1) }},
         {{ (res.skill_overlap * 100)|round(1) }},
         {{ (res.exp_bonus * 100)|round(1) }},
         {{ res.match_score }}
       ],
-      backgroundColor: 'rgba(59,130,246,0.15)',
-      borderColor:     '#3b82f6',
-      pointBackgroundColor: '#3b82f6',
-      pointBorderColor: '#fff',
+      backgroundColor: 'rgba(79,142,247,0.12)',
+      borderColor:     '#4f8ef7',
+      pointBackgroundColor: '#4f8ef7',
+      pointBorderColor: '#050b14',
+      pointHoverBackgroundColor: '#a78bfa',
       borderWidth: 2,
+      pointRadius: 4,
     }]
   },
   options: {
@@ -193,13 +213,22 @@ new Chart(document.getElementById('radarChart'), {
     scales: {
       r: {
         min: 0, max: 100,
-        ticks: { color: '#6b7280', backdropColor: 'transparent', stepSize: 25 },
-        grid:  { color: 'rgba(255,255,255,0.08)' },
-        pointLabels: { color: '#9ca3af', font: { size: 11 } }
+        ticks: {
+          color: '#3d506b',
+          backdropColor: 'transparent',
+          stepSize: 25,
+          font: { size: 10 }
+        },
+        grid:  { color: 'rgba(255,255,255,0.05)' },
+        angleLines: { color: 'rgba(255,255,255,0.05)' },
+        pointLabels: { color: '#8b9fc4', font: { size: 11, family: "'Inter', sans-serif" } }
       }
     },
     plugins: {
-      legend: { display: false }
+      legend: {
+        display: true,
+        labels: { color: '#8b9fc4', font: { size: 11 }, boxWidth: 12 }
+      }
     }
   }
 });
