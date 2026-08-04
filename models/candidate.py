@@ -2,6 +2,7 @@
 models/candidate.py — Candidate Model
 =======================================
 Stores extracted candidate information from a resume.
+Each candidate is owned by a specific user (tenant).
 """
 
 import json
@@ -13,6 +14,8 @@ class Candidate(db.Model):
     __tablename__ = "candidates"
 
     id                = db.Column(db.Integer, primary_key=True)
+    owner_id          = db.Column(db.Integer, db.ForeignKey("users.id"),
+                                  nullable=False, index=True)
     name              = db.Column(db.String(200), nullable=True)
     email             = db.Column(db.String(200), nullable=True)
     phone             = db.Column(db.String(50),  nullable=True)
@@ -25,7 +28,8 @@ class Candidate(db.Model):
     uploaded_at       = db.Column(db.DateTime,
                                   default=lambda: datetime.now(timezone.utc))
 
-    # Relationship to screening results
+    # Relationships
+    owner   = db.relationship("User",            back_populates="candidates")
     results = db.relationship(
         "ScreeningResult", back_populates="candidate",
         cascade="all, delete-orphan"

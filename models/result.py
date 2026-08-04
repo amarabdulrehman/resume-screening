@@ -2,6 +2,7 @@
 models/result.py — Screening Result Model
 ==========================================
 Stores the NLP matching score between a Candidate and a Job.
+Each result is owned by a specific user (tenant).
 """
 
 from datetime import datetime, timezone
@@ -12,6 +13,8 @@ class ScreeningResult(db.Model):
     __tablename__ = "screening_results"
 
     id            = db.Column(db.Integer, primary_key=True)
+    owner_id      = db.Column(db.Integer, db.ForeignKey("users.id"),
+                              nullable=False, index=True)
     candidate_id  = db.Column(db.Integer, db.ForeignKey("candidates.id"), nullable=False)
     job_id        = db.Column(db.Integer, db.ForeignKey("jobs.id"),        nullable=False)
     match_score   = db.Column(db.Float,   default=0.0)   # composite 0-100

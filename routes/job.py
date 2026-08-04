@@ -1,7 +1,8 @@
 """routes/job.py — Job Description & Screening Routes"""
 
 from flask import (Blueprint, render_template, request,
-                   redirect, url_for, flash, jsonify)
+                   redirect, url_for, flash, jsonify, abort)
+from flask_login import login_required, current_user
 from extensions import db
 from models import Job, Candidate, ScreeningResult
 from services.matcher import rank_candidates
@@ -9,7 +10,16 @@ from services.matcher import rank_candidates
 job_bp = Blueprint("job", __name__)
 
 
+def _get_owned_job(job_id: int) -> Job:
+    """Fetch a job and abort 403 if it doesn't belong to current user."""
+    job = db.session.get(Job, job_id)
+    if not job or job.owner_id != current_user.id:
+        abort(403)
+    return job
+
+
 @job_bp.route("/new", methods=["GET", "POST"])
+@login_required
 def new_job():
     """Create a new job description."""
     if request.method == "POST":
@@ -27,7 +37,7 @@ def new_job():
             if s.strip()
         ]
 
-        job = Job(title=title, description=description)
+        job = Job(title=title, description=description, owner_id=current_user.id)
         job.required_skills = required_skills
         db.session.add(job)
         db.session.commit()
@@ -39,30 +49,29 @@ def new_job():
 
 
 @job_bp.route("/<int:job_id>")
+@login_required
 def job_detail(job_id):
     """Single job detail page."""
-    job = db.session.get(Job, job_id)
-    if not job:
-        flash("Job not found.", "danger")
-        return redirect(url_for("main.index"))
+    job = _get_owned_job(job_id)
     return render_template("job_detail.html", job=job)
 
 
 @job_bp.route("/<int:job_id>/screen", methods=["POST"])
+@login_required
 def screen(job_id):
-    """Run NLP screening for all candidates against this job."""
-    job = db.session.get(Job, job_id)
-    if not job:
-        flash("Job not found.", "danger")
-        return redirect(url_for("main.index"))
+    """Run NLP screening for current user's candidates against this job."""
+    job = _get_owned_job(job_id)
+    uid = current_user.id
 
-    candidates = db.session.query(Candidate).all()
+    candidates = db.session.query(Candidate).filter_by(owner_id=uid).all()
     if not candidates:
         flash("No candidates uploaded yet.", "warning")
         return redirect(url_for("job.job_detail", job_id=job_id))
 
-    # Delete previous results for this job
-    db.session.query(ScreeningResult).filter_by(job_id=job_id).delete()
+    # Delete previous results for this job (owned by this user)
+    db.session.query(ScreeningResult).filter_by(
+        job_id=job_id, owner_id=uid
+    ).delete()
 
     # Run matching engine
     ranked = rank_candidates(candidates, job)
@@ -70,6 +79,7 @@ def screen(job_id):
     # Persist results
     for rank_pos, (candidate, scores) in enumerate(ranked, start=1):
         result = ScreeningResult(
+            owner_id      = uid,
             candidate_id  = candidate.id,
             job_id        = job_id,
             match_score   = scores["match_score"],
@@ -86,16 +96,14 @@ def screen(job_id):
 
 
 @job_bp.route("/<int:job_id>/results")
+@login_required
 def results(job_id):
     """Ranked candidates table for a specific job."""
-    job = db.session.get(Job, job_id)
-    if not job:
-        flash("Job not found.", "danger")
-        return redirect(url_for("main.index"))
+    job = _get_owned_job(job_id)
 
     ranked_results = (
         db.session.query(ScreeningResult)
-        .filter_by(job_id=job_id)
+        .filter_by(job_id=job_id, owner_id=current_user.id)
         .order_by(ScreeningResult.rank)
         .all()
     )
@@ -103,36 +111,44 @@ def results(job_id):
 
 
 @job_bp.route("/<int:job_id>/delete", methods=["POST"])
+@login_required
 def delete_job(job_id):
     """Delete a job posting."""
-    job = db.session.get(Job, job_id)
-    if job:
-        db.session.delete(job)
-        db.session.commit()
-        flash("Job deleted.", "info")
+    job = _get_owned_job(job_id)
+    db.session.delete(job)
+    db.session.commit()
+    flash("Job deleted.", "info")
     return redirect(url_for("main.index"))
 
 
 @job_bp.route("/list")
+@login_required
 def job_list():
-    """All job postings."""
-    jobs = db.session.query(Job).order_by(Job.created_at.desc()).all()
+    """All job postings belonging to the current user."""
+    jobs = (
+        db.session.query(Job)
+        .filter_by(owner_id=current_user.id)
+        .order_by(Job.created_at.desc())
+        .all()
+    )
     return render_template("job_list.html", jobs=jobs)
 
 
 # ── JSON API endpoint ────────────────────────────────────
 @job_bp.route("/api/screen", methods=["POST"])
+@login_required
 def api_screen():
     """
     JSON API: POST { job_id: int } → returns ranked candidates as JSON.
+    Only screens candidates owned by the current user.
     """
     data   = request.get_json(force=True)
     job_id = data.get("job_id")
     job    = db.session.get(Job, job_id)
-    if not job:
+    if not job or job.owner_id != current_user.id:
         return jsonify({"error": "Job not found"}), 404
 
-    candidates = db.session.query(Candidate).all()
+    candidates = db.session.query(Candidate).filter_by(owner_id=current_user.id).all()
     ranked     = rank_candidates(candidates, job)
 
     return jsonify([

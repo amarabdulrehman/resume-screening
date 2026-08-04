@@ -2,7 +2,8 @@
 
 import os
 from flask import (Blueprint, render_template, request,
-                   redirect, url_for, flash, current_app, jsonify)
+                   redirect, url_for, flash, current_app, jsonify, abort)
+from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from extensions import db
 from models import Candidate
@@ -20,9 +21,17 @@ def allowed_file(filename: str) -> bool:
     )
 
 
+def user_upload_dir() -> str:
+    """Return and create a per-user upload subdirectory."""
+    base = os.path.join(current_app.config["UPLOAD_FOLDER"], str(current_user.id))
+    os.makedirs(base, exist_ok=True)
+    return base
+
+
 @resume_bp.route("/upload", methods=["GET", "POST"])
+@login_required
 def upload():
-    """Upload one or multiple resume files."""
+    """Upload one or multiple resume files (scoped to current user)."""
     if request.method == "POST":
         files = request.files.getlist("resumes")
         if not files or all(f.filename == "" for f in files):
@@ -31,23 +40,23 @@ def upload():
 
         added = []
         errors = []
+        upload_dir = user_upload_dir()
+
         for file in files:
             if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                save_path = os.path.join(
-                    current_app.config["UPLOAD_FOLDER"], filename)
+                filename  = secure_filename(file.filename)
+                save_path = os.path.join(upload_dir, filename)
                 file.save(save_path)
 
                 try:
-                    # Parse text from PDF/DOCX
                     raw_text = parse_resume(save_path)
-                    # Extract structured info using NLP
                     info = extract_candidate_info(
                         raw_text,
                         current_app.config["SKILLS_DB_PATH"]
                     )
 
                     candidate = Candidate(
+                        owner_id         = current_user.id,
                         name             = info.get("name"),
                         email            = info.get("email"),
                         phone            = info.get("phone"),
@@ -78,12 +87,12 @@ def upload():
 
 
 @resume_bp.route("/candidate/<int:candidate_id>")
+@login_required
 def candidate_detail(candidate_id):
-    """Full candidate profile page."""
+    """Full candidate profile page — only accessible by owner."""
     candidate = db.session.get(Candidate, candidate_id)
-    if not candidate:
-        flash("Candidate not found.", "danger")
-        return redirect(url_for("main.all_candidates"))
+    if not candidate or candidate.owner_id != current_user.id:
+        abort(403)
 
     results = sorted(
         candidate.results,
@@ -98,18 +107,23 @@ def candidate_detail(candidate_id):
 
 
 @resume_bp.route("/candidate/<int:candidate_id>/delete", methods=["POST"])
+@login_required
 def delete_candidate(candidate_id):
-    """Delete a candidate and their resume file."""
+    """Delete a candidate and their resume file — only accessible by owner."""
     candidate = db.session.get(Candidate, candidate_id)
-    if candidate:
-        # Remove uploaded file
-        file_path = os.path.join(
-            current_app.config["UPLOAD_FOLDER"],
-            candidate.resume_filename
-        )
-        if os.path.exists(file_path):
-            os.remove(file_path)
-        db.session.delete(candidate)
-        db.session.commit()
-        flash("Candidate deleted.", "info")
+    if not candidate or candidate.owner_id != current_user.id:
+        abort(403)
+
+    # Remove uploaded file
+    file_path = os.path.join(
+        current_app.config["UPLOAD_FOLDER"],
+        str(current_user.id),
+        candidate.resume_filename
+    )
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    db.session.delete(candidate)
+    db.session.commit()
+    flash("Candidate deleted.", "info")
     return redirect(url_for("main.all_candidates"))

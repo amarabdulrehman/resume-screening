@@ -2,6 +2,7 @@
 models/job.py — Job Description Model
 =======================================
 Stores a job posting and its required skills/description.
+Each job is owned by a specific user (tenant).
 """
 
 import json
@@ -12,14 +13,17 @@ from extensions import db
 class Job(db.Model):
     __tablename__ = "jobs"
 
-    id              = db.Column(db.Integer, primary_key=True)
-    title           = db.Column(db.String(300), nullable=False)
-    description     = db.Column(db.Text,         nullable=False)
-    _required_skills= db.Column("required_skills", db.Text, default="[]")
-    created_at      = db.Column(db.DateTime,
-                                default=lambda: datetime.now(timezone.utc))
+    id               = db.Column(db.Integer, primary_key=True)
+    owner_id         = db.Column(db.Integer, db.ForeignKey("users.id"),
+                                 nullable=False, index=True)
+    title            = db.Column(db.String(300), nullable=False)
+    description      = db.Column(db.Text,         nullable=False)
+    _required_skills = db.Column("required_skills", db.Text, default="[]")
+    created_at       = db.Column(db.DateTime,
+                                 default=lambda: datetime.now(timezone.utc))
 
-    # Relationship to screening results
+    # Relationships
+    owner   = db.relationship("User", back_populates="jobs")
     results = db.relationship(
         "ScreeningResult", back_populates="job",
         cascade="all, delete-orphan"

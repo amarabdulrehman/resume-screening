@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Admin — Platform Overview{% endblock %}
+{% block page_title %}
+  <i class="bi bi-shield-fill-check me-2" style="color:var(--accent)"></i>Admin Panel
+{% endblock %}
+
+{% block content %}
+<!-- ── Platform Stats ──────────────────────────────────── -->
+<div class="row g-4 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:linear-gradient(135deg,#4f8ef7,#2563eb)">
+        <i class="bi bi-people-fill"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-value">{{ total_users }}</div>
+        <div class="stat-label">Total Users</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:linear-gradient(135deg,#a78bfa,#7c3aed)">
+        <i class="bi bi-file-person-fill"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-value">{{ total_cands }}</div>
+        <div class="stat-label">All Candidates</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:linear-gradient(135deg,#10d9a0,#059669)">
+        <i class="bi bi-briefcase-fill"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-value">{{ total_jobs }}</div>
+        <div class="stat-label">All Jobs</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:linear-gradient(135deg,#fbbf24,#d97706)">
+        <i class="bi bi-graph-up-arrow"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-value">{{ total_results }}</div>
+        <div class="stat-label">All Screenings</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Users Table ─────────────────────────────────────── -->
+<div class="content-card">
+  <div class="card-header-custom d-flex align-items-center justify-content-between">
+    <div>
+      <h2 class="card-title-custom mb-0">
+        <i class="bi bi-people me-2" style="color:var(--primary)"></i>Registered Users
+      </h2>
+      <p class="card-sub mb-0">All tenant accounts on the platform</p>
+    </div>
+    <span class="badge-custom">{{ total_users }} total</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-custom">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>User</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Joined</th>
+          <th class="text-center">Candidates</th>
+          <th class="text-center">Jobs</th>
+          <th class="text-center">Screenings</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in user_stats %}
+        <tr>
+          <td><span style="color:var(--text-muted);font-size:0.82rem;">{{ row.user.id }}</span></td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;">
+                {{ row.user.name[0].upper() }}
+              </div>
+              <div>
+                <div style="font-weight:600;font-size:0.9rem;">{{ row.user.name }}</div>
+                {% if row.user.id == current_user.id %}
+                  <span style="font-size:0.72rem;color:var(--success)">(you)</span>
+                {% endif %}
+              </div>
+            </div>
+          </td>
+          <td style="color:var(--text-secondary);font-size:0.87rem;">{{ row.user.email }}</td>
+          <td>
+            {% if row.user.is_admin %}
+              <span class="badge" style="background:rgba(167,139,250,0.15);color:var(--accent);border:1px solid rgba(167,139,250,0.3);border-radius:8px;padding:3px 10px;font-size:0.75rem;">
+                <i class="bi bi-shield-fill-check me-1"></i>Admin
+              </span>
+            {% else %}
+              <span class="badge" style="background:rgba(79,142,247,0.1);color:var(--primary);border:1px solid rgba(79,142,247,0.2);border-radius:8px;padding:3px 10px;font-size:0.75rem;">
+                <i class="bi bi-person me-1"></i>User
+              </span>
+            {% endif %}
+          </td>
+          <td style="color:var(--text-secondary);font-size:0.85rem;">
+            {{ row.user.created_at.strftime('%b %d, %Y') if row.user.created_at else 'N/A' }}
+          </td>
+          <td class="text-center"><span style="font-weight:600;color:var(--text-primary)">{{ row.candidates }}</span></td>
+          <td class="text-center"><span style="font-weight:600;color:var(--text-primary)">{{ row.jobs }}</span></td>
+          <td class="text-center"><span style="font-weight:600;color:var(--text-primary)">{{ row.results }}</span></td>
+          <td>
+            <div class="d-flex gap-2">
+              {% if row.user.id != current_user.id %}
+                <!-- Toggle Admin -->
+                <form method="POST" action="{{ url_for('admin.toggle_admin', user_id=row.user.id) }}"
+                      onsubmit="return confirm('Change admin status for {{ row.user.name }}?')">
+                  <button type="submit" class="btn btn-sm"
+                    style="background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.25);color:var(--accent);border-radius:8px;padding:4px 10px;font-size:0.78rem;">
+                    {% if row.user.is_admin %}
+                      <i class="bi bi-person-dash"></i> Demote
+                    {% else %}
+                      <i class="bi bi-shield-plus"></i> Promote
+                    {% endif %}
+                  </button>
+                </form>
+                <!-- Delete User -->
+                <form method="POST" action="{{ url_for('admin.delete_user', user_id=row.user.id) }}"
+                      onsubmit="return confirm('DELETE {{ row.user.name }}? This will permanently remove all their data.')">
+                  <button type="submit" class="btn btn-sm"
+                    style="background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.25);color:var(--danger);border-radius:8px;padding:4px 10px;font-size:0.78rem;">
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </form>
+              {% else %}
+                <span style="color:var(--text-muted);font-size:0.8rem;padding:4px 0;">—</span>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="9" class="text-center" style="color:var(--text-muted);padding:2rem;">No users found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
